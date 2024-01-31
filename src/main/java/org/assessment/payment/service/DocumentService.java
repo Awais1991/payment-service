@@ -1,5 +1,6 @@
 package org.assessment.payment.service;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.assessment.payment.connector.DocumentConnector;
 import org.assessment.payment.dto.ReceiptDetailDto;
 import org.assessment.payment.dto.ReceiptDto;
@@ -21,6 +22,7 @@ public class DocumentService {
         this.documentConnector = documentConnector;
     }
 
+    @CircuitBreaker(name = "RECEIPT_GENERATION_CIRCUIT_BREAKER", fallbackMethod = "generateReceiptFallBack")
     public String generateReceipt(FeeTransaction feeTransaction){
         // prepare data here
         //validate request before sending it
@@ -29,7 +31,11 @@ public class DocumentService {
                .map(this::mapToReceiptDto)
                .orElseThrow(() -> new ApplicationException(ErrorCode.TRANSACTION_NOT_FOUND));
 
-        return documentConnector.generateReceipt(receiptDto);
+         documentConnector.generateReceipt(receiptDto);
+         return receiptDto.getTransactionId();
+    }
+    public String generateReceiptFallBack(FeeTransaction feeTransaction, Throwable throwable){
+        return Optional.ofNullable(feeTransaction).map(FeeTransaction::getTransactionId).orElse("1099999999");
     }
 
     private ReceiptDto mapToReceiptDto(FeeTransaction feeTransaction){
