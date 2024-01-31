@@ -1,0 +1,33 @@
+server:
+  servlet:
+    context-path: /payment
+  port: 8083
+spring:
+  datasource:
+    url: jdbc:h2:mem:payment
+    driverClassName: org.h2.Driver
+    username: payment
+    password: payment
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
+
+  h2:
+    console:
+      enabled: true
+service:
+  student:
+    base: http://localhost:8081/student
+  fee:
+    base: http://localhost:8082/fee
+  document:
+    base: http://localhost:8084/document
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      getStudentApiCircuitBreaker:
+        registerHealthIndicator: true
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        failureRateThreshold: 10
